@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Калькулятор об'єму та маси рідини</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .tank-gradient {
+            background: linear-gradient(to bottom, #e2e8f0 0%, #cbd5e1 100%);
+        }
+        .liquid-blue {
+            background: linear-gradient(to bottom, #3b82f6 0%, #1d4ed8 100%);
+            transition: height 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800 font-sans">
+
+    <div class="max-w-5xl mx-auto px-4 py-8">
+        <header class="mb-10 text-center">
+            <h1 class="text-3xl md:text-4xl font-bold text-slate-900 mb-2">Калькулятор об'єму рідини</h1>
+            <p class="text-slate-600">Розрахунок об'єму, літрів та маси (введення в сантиметрах)</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Секція налаштувань -->
+            <div class="lg:col-span-2 space-y-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h2 class="text-xl font-semibold mb-4 flex items-center">
+                        <span class="mr-2">📐</span> Параметри ємності (см)
+                    </h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Вибір форми -->
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-slate-700">Форма ємності</label>
+                            <select id="shape" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                                <option value="cylinder">Циліндр (Вертикальний)</option>
+                                <option value="cylinder_horiz">Циліндр (Горизонтальний)</option>
+                                <option value="rectangular">Прямокутний бак</option>
+                            </select>
+                        </div>
+
+                        <!-- Пресети щільності -->
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-slate-700">Рідина (щільність)</label>
+                            <select id="densityPreset" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                                <option value="1000">Вода (1000 кг/м³)</option>
+                                <option value="850">Дизельне паливо (850 кг/м³)</option>
+                                <option value="750">Бензин (750 кг/м³)</option>
+                                <option value="920">Олія (920 кг/м³)</option>
+                                <option value="1030">Молоко (1030 кг/м³)</option>
+                                <option value="custom">Власне значення...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4" id="inputsContainer">
+                        <!-- Динамічні поля вводу (см) -->
+                    </div>
+
+                    <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-2" id="densityInputContainer" style="display: none;">
+                            <label class="block text-sm font-medium text-slate-700">Щільність (кг/м³)</label>
+                            <input type="number" id="density" value="1000" step="0.1" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-slate-700">Поточний рівень рідини (см)</label>
+                            <input type="number" id="level" value="50" step="1" class="w-full p-2.5 bg-blue-50 border border-blue-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Результати -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-blue-600 text-white p-6 rounded-2xl shadow-md">
+                        <p class="text-blue-100 text-sm font-medium uppercase tracking-wider">Фактично літрів</p>
+                        <h3 class="text-3xl font-bold mt-1" id="resLiters">0.00</h3>
+                        <p class="text-blue-200 text-xs mt-2">Об'єм рідини в л</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                        <p class="text-slate-500 text-sm font-medium uppercase tracking-wider">Маса рідини</p>
+                        <h3 class="text-3xl font-bold mt-1 text-slate-800" id="resMass">0.00</h3>
+                        <p class="text-slate-400 text-xs mt-2">Маса в кг</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                        <p class="text-slate-500 text-sm font-medium uppercase tracking-wider">Загальний об'єм</p>
+                        <h3 class="text-3xl font-bold mt-1 text-slate-800" id="resTotal">0.00</h3>
+                        <p class="text-slate-400 text-xs mt-2">Повний об'єм м³</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Візуалізація -->
+            <div class="space-y-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-full flex flex-col items-center">
+                    <h2 class="text-xl font-semibold mb-8 self-start">📊 Візуалізація</h2>
+                    
+                    <div class="flex items-center justify-center h-80 w-full">
+                        <div class="relative w-48 h-48 md:w-56 md:h-56 tank-gradient border-4 border-slate-400 overflow-hidden flex flex-col justify-end" id="tankVisual">
+                            <div id="liquidVisual" class="liquid-blue w-full h-0"></div>
+                            
+                            <!-- Маркування -->
+                            <div class="absolute inset-0 flex flex-col justify-between py-2 px-2 pointer-events-none">
+                                <span class="text-[10px] text-slate-500 border-t border-slate-300 w-full">100%</span>
+                                <span class="text-[10px] text-slate-500 border-t border-slate-300 w-full">75%</span>
+                                <span class="text-[10px] text-slate-500 border-t border-slate-300 w-full">50%</span>
+                                <span class="text-[10px] text-slate-500 border-t border-slate-300 w-full">25%</span>
+                                <span class="text-[10px] text-slate-500">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 text-center text-sm text-slate-500">
+                        Заповнено на <span id="fillPercentage" class="font-bold text-blue-600">0</span>%
+                        <div id="shapeName" class="mt-1 italic"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="mt-12 text-center text-slate-400 text-sm">
+            &copy; 2024 Калькулятор інженерних розрахунків. Дані вводяться в сантиметрах (см).
+        </footer>
+    </div>
+
+    <script>
+        const shapeSelect = document.getElementById('shape');
+        const densityPreset = document.getElementById('densityPreset');
+        const densityInputContainer = document.getElementById('densityInputContainer');
+        const densityInput = document.getElementById('density');
+        const levelInput = document.getElementById('level');
+        const inputsContainer = document.getElementById('inputsContainer');
+        
+        const resLiters = document.getElementById('resLiters');
+        const resMass = document.getElementById('resMass');
+        const resTotal = document.getElementById('resTotal');
+        const liquidVisual = document.getElementById('liquidVisual');
+        const fillPercentageText = document.getElementById('fillPercentage');
+        const tankVisual = document.getElementById('tankVisual');
+        const shapeNameDisplay = document.getElementById('shapeName');
+
+        // Значення за замовчуванням тепер у сантиметрах
+        const inputs = {
+            height: { label: 'Висота (см)', value: 150, id: 'inHeight' },
+            diameter: { label: 'Діаметр (см)', value: 100, id: 'inDiameter' },
+            width: { label: 'Ширина (см)', value: 100, id: 'inWidth' },
+            length: { label: 'Довжина (см)', value: 200, id: 'inLength' }
+        };
+
+        function updateInputFields() {
+            const shape = shapeSelect.value;
+            inputsContainer.innerHTML = '';
+            
+            tankVisual.className = "relative w-48 md:w-56 tank-gradient border-4 border-slate-400 overflow-hidden flex flex-col justify-end";
+            
+            let fields = [];
+            if (shape === 'cylinder') {
+                fields = ['height', 'diameter'];
+                tankVisual.classList.add('h-80', 'rounded-b-2xl'); 
+                shapeNameDisplay.innerText = "Вертикальний циліндр (вигляд збоку)";
+            } else if (shape === 'cylinder_horiz') {
+                fields = ['length', 'diameter'];
+                tankVisual.classList.add('h-48', 'md:h-56', 'rounded-full'); 
+                shapeNameDisplay.innerText = "Горизонтальний циліндр (вигляд з торця)";
+            } else if (shape === 'rectangular') {
+                fields = ['height', 'width', 'length'];
+                tankVisual.classList.add('h-80'); 
+                shapeNameDisplay.innerText = "Прямокутний бак (вигляд збоку)";
+            }
+
+            fields.forEach(f => {
+                const div = document.createElement('div');
+                div.className = 'space-y-2';
+                div.innerHTML = `
+                    <label class="block text-sm font-medium text-slate-700">${inputs[f].label}</label>
+                    <input type="number" id="${inputs[f].id}" value="${inputs[f].value}" step="0.1" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                `;
+                inputsContainer.appendChild(div);
+                
+                document.getElementById(inputs[f].id).addEventListener('input', (e) => {
+                    inputs[f].value = parseFloat(e.target.value) || 0;
+                    calculate();
+                });
+            });
+
+            calculate();
+        }
+
+        densityPreset.addEventListener('change', () => {
+            if (densityPreset.value === 'custom') {
+                densityInputContainer.style.display = 'block';
+            } else {
+                densityInputContainer.style.display = 'none';
+                densityInput.value = densityPreset.value;
+            }
+            calculate();
+        });
+
+        densityInput.addEventListener('input', calculate);
+        levelInput.addEventListener('input', calculate);
+        shapeSelect.addEventListener('change', updateInputFields);
+
+        function calculate() {
+            const shape = shapeSelect.value;
+            const density = parseFloat(densityInput.value) || 0;
+            // Перетворення введеного рівня з см в м
+            const levelCm = parseFloat(levelInput.value) || 0;
+            const level = levelCm / 100;
+            
+            let totalVolumeM3 = 0;
+            let liquidVolumeM3 = 0;
+            let maxHeightM = 0;
+
+            if (shape === 'cylinder') {
+                const h = inputs.height.value / 100;
+                const d = inputs.diameter.value / 100;
+                const r = d / 2;
+                maxHeightM = h;
+                totalVolumeM3 = Math.PI * Math.pow(r, 2) * h;
+                const effectiveLevel = Math.min(level, h);
+                liquidVolumeM3 = Math.PI * Math.pow(r, 2) * effectiveLevel;
+            } 
+            else if (shape === 'cylinder_horiz') {
+                const l = inputs.length.value / 100;
+                const d = inputs.diameter.value / 100;
+                const r = d / 2;
+                maxHeightM = d;
+                totalVolumeM3 = Math.PI * Math.pow(r, 2) * l;
+                
+                const h = Math.min(level, d);
+                if (h <= 0) {
+                    liquidVolumeM3 = 0;
+                } else if (h >= d) {
+                    liquidVolumeM3 = totalVolumeM3;
+                } else {
+                    const segmentArea = Math.pow(r, 2) * Math.acos((r - h) / r) - (r - h) * Math.sqrt(2 * r * h - Math.pow(h, 2));
+                    liquidVolumeM3 = segmentArea * l;
+                }
+            }
+            else if (shape === 'rectangular') {
+                const h = inputs.height.value / 100;
+                const w = inputs.width.value / 100;
+                const l = inputs.length.value / 100;
+                maxHeightM = h;
+                totalVolumeM3 = h * w * l;
+                const effectiveLevel = Math.min(level, h);
+                liquidVolumeM3 = effectiveLevel * w * l;
+            }
+
+            const fillPercent = maxHeightM > 0 ? Math.min((level / maxHeightM) * 100, 100) : 0;
+            
+            resTotal.innerText = totalVolumeM3.toFixed(4) + ' м³';
+            resLiters.innerText = (liquidVolumeM3 * 1000).toLocaleString('uk-UA', {maximumFractionDigits: 2});
+            resMass.innerText = (liquidVolumeM3 * density).toLocaleString('uk-UA', {maximumFractionDigits: 2});
+            
+            liquidVisual.style.height = fillPercent + '%';
+            fillPercentageText.innerText = fillPercent.toFixed(1);
+
+            if (level > maxHeightM && maxHeightM > 0) {
+                levelInput.classList.add('border-red-500', 'bg-red-50');
+            } else {
+                levelInput.classList.remove('border-red-500', 'bg-red-50');
+            }
+        }
+
+        window.onload = updateInputFields;
+    </script>
+</body>
+</html>
