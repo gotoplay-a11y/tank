@@ -1,6 +1,6 @@
 {
   "name": "Об'єм Бака",
-  "short_name": "Додаток",
+  "short_name": "Об'єм Бака",
   "start_url": "index.html",
   "display": "standalone",
   "background_color": "#ffffff",
